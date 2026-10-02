@@ -17,14 +17,19 @@ initialize_app()
 @https_fn.on_request(cors=False)
 def rsvp(req: https_fn.Request) -> https_fn.Response:
 
-    now = datetime.now().astimezone(dateutil.tz.gettz(os.environ.get("America/New_York")))
-    
-    p = Person(req.json["firstname"], req.json["lastname"], now, req.json["email"])
-    r = Rsvp(now, req.json["eventcode"])
+    try:
 
-    db = firestore.client()
+        now = datetime.now().astimezone(dateutil.tz.gettz(os.environ.get("America/New_York")))
+        
+        p = Person(req.json["firstname"], req.json["lastname"], now, req.json["email"])
+        r = Rsvp(now, req.json["eventcode"])
 
-    db.collection("people").document(p.generate_id()).set(p.to_dict(), merge=True)
-    db.collection("people").document(p.generate_id()).collection("rsvps").document(r.generate_id()).set(r.to_dict())
+        db = firestore.client()
 
-    #TODO return confirmation
+        db.collection("people").document(p.generate_id()).set(p.to_dict(), merge=True)
+        db.collection("people").document(p.generate_id()).collection("rsvps").document(r.generate_id()).set(r.to_dict())
+
+    except Exception as e:
+        return https_fn.Response(f"An error occurred: {str(e)}", status=500)
+
+    return https_fn.Response("RSVP successfully recorded.", status=200)
