@@ -4,6 +4,7 @@ from firebase_admin import initialize_app, firestore
 
 from datetime import datetime
 import os
+import re
 
 import dateutil
 
@@ -16,6 +17,13 @@ initialize_app()
 
 @https_fn.on_request(cors=False)
 def rsvp(req: https_fn.Request) -> https_fn.Response:
+
+    if "email" not in req.json or "eventcode" not in req.json:
+        return https_fn.Response("Missing required fields.", status=400)
+
+    regex = re.compile(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+')
+    if re.fullmatch(regex, req.json["email"]) == False:
+        return https_fn.Response("Invalid email address.", status=400)
 
     try:
 
