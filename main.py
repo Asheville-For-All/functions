@@ -1,4 +1,4 @@
-from firebase_functions import https_fn
+from firebase_functions import https_fn, options
 from firebase_functions.options import set_global_options
 from firebase_admin import initialize_app, firestore
 from firebase_functions import logger
@@ -26,22 +26,25 @@ set_global_options(max_instances=10)
 
 initialize_app()
 
-@https_fn.on_request(cors=True)
-def rsvp(req: https_fn.Request) -> https_fn.Response:
+@https_fn.on_request(cors=options.CorsOptions(
+    cors_origins=["http://localhost:5500", r"https://.*\.web\.app", r"https://.*\.firebaseapp\.com", r"ashevilleforall"],
+    cors_methods=["get", "post"],
+))
+def rsvpv2(req: https_fn.Request) -> https_fn.Response:
 
-    if "email" not in req.json or "eventcode" not in req.json:
+    if "email" not in req.form or "eventcode" not in req.form or "zip" not in req.form:
         return https_fn.Response("Missing required fields.", status=400)
 
     regex = re.compile(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+')
-    if re.fullmatch(regex, req.json["email"]) == False:
+    if re.fullmatch(regex, req.form.get("email")) == False:
         return https_fn.Response("Invalid email address.", status=400)
 
     try:
 
         now = datetime.now().astimezone(dateutil.tz.gettz(os.environ.get("America/New_York")))
         
-        p = Person(req.json.get("firstname", ""), req.json.get("lastname", ""), now, req.json["email"], req.json["zip"])
-        r = Rsvp(now, req.json["eventcode"])
+        p = Person(req.form.get("firstname", ""), req.form.get("lastname", ""), now, req.form.get("email"), req.form.get("zip"))
+        r = Rsvp(now, req.form.get("eventcode"))
 
         db = firestore.client(database_id="default")
 
