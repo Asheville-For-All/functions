@@ -16,6 +16,8 @@ import re
 
 import dateutil
 
+from emailer import send_email
+
 from models.person import Person
 from models.rsvp import Rsvp
 
@@ -76,12 +78,18 @@ def handle_new_rsvp(event: Event[DocumentSnapshot]) -> None:
     # 3. Retrieve the actual document data
     event_code = event.data.to_dict().get("eventcode") if event.data else None
 
-    ##TODO send email to rsvp_id
+    ##TODO send email to person_id. Get the event info from firebase using the eventcode.
+
+    content = "<p>Thank for your RSVP! We look forward to seeing you.</p><p>Here is the event information:</p>"
 
     user = EMAIL_USER.value
     email_pw = EMAIL_PW.value
     email_sender = EMAIL_SENDER.value
     email_smtp = EMAIL_SMTP.value
+
+    send_email(user, email_pw, email_sender, parent_id, "Thank you for your RSVP!", content, email_smtp)
+
+
 
     
 
