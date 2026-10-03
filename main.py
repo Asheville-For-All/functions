@@ -48,7 +48,13 @@ def rsvpv2(req: https_fn.Request) -> https_fn.Response:
 
         db = firestore.client(database_id="default")
 
-        db.collection("people").document(p.generate_id()).set(p.to_dict(), merge=["zip"])
+        mergearray = ["zip"]
+        if req.form.get("firstname", "") != "":
+            mergearray.append("firstname")
+        if req.form.get("lastname", "") != "":
+            mergearray.append("lastname")
+
+        db.collection("people").document(p.generate_id()).set(p.to_dict(), merge=mergearray)
         db.collection("people").document(p.generate_id()).collection("rsvps").document(r.generate_id()).set(r.to_dict())
 
     except Exception as e:
