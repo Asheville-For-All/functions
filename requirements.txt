@@ -1,6 +1,8 @@
+annotated-types==0.8.0
 anyio==4.15.1
 blinker==1.9.0
 CacheControl==0.14.4
+calendar-link==0.3.0
 certifi==2026.7.22
 cffi==2.1.1
 charset-normalizer==3.5.2
@@ -31,6 +33,8 @@ hpack==4.2.0
 httpcore==1.0.9
 httpx==0.28.1
 hyperframe==6.1.0
+ical==14.2.0
+icalendar==7.3.0
 idna==3.20
 itsdangerous==2.2.0
 Jinja2==3.1.6
@@ -43,13 +47,18 @@ protobuf==7.36.2
 pyasn1==0.6.4
 pyasn1_modules==0.4.2
 pycparser==3.0
+pydantic==2.13.5
+pydantic_core==2.46.5
 PyJWT==2.15.1
 python-dateutil==2.9.0.post0
+pytz==2026.4
 PyYAML==6.0.3
 requests==2.34.2
 six==1.17.0
 starlette==1.7.0
+typing-inspection==0.4.4
 typing_extensions==4.16.0
+tzdata==2026.5
 urllib3==2.8.0
 uvicorn==0.54.0
 uvicorn-worker==0.4.0

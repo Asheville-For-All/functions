@@ -2,15 +2,12 @@ from firebase_functions import https_fn, options
 from firebase_functions.options import set_global_options
 from firebase_admin import initialize_app, firestore
 from firebase_functions import logger
+from firebase_functions.params import SecretParam
 
 from firebase_functions.firestore_fn import (
   on_document_created,
-  on_document_deleted,
-  on_document_updated,
-  on_document_written,
   Event,
-  Change,
-  DocumentSnapshot,
+  DocumentSnapshot
 )
 
 from datetime import datetime
@@ -25,6 +22,11 @@ from models.rsvp import Rsvp
 set_global_options(max_instances=10)
 
 initialize_app()
+
+EMAIL_USER = SecretParam("email-acct-user")
+EMAIL_PW = SecretParam("email-acct-pw")
+EMAIL_SENDER = SecretParam("email-sender")
+EMAIL_SMTP = SecretParam("email-smtp")
 
 @https_fn.on_request(cors=options.CorsOptions(
     cors_origins=["http://localhost:5500", r"https://.*\.web\.app", r"https://.*\.firebaseapp\.com", r"ashevilleforall"],
@@ -63,7 +65,7 @@ def rsvpv2(req: https_fn.Request) -> https_fn.Response:
     return https_fn.Response("RSVP successfully recorded.", status=200)
 
 # Triggered when a new document is created in the "rsvps" subcollection
-@on_document_created(document="people/{personId}/rsvps/{rsvpId}", database="default")
+@on_document_created(document="people/{personId}/rsvps/{rsvpId}", database="default", secrets=[EMAIL_USER, EMAIL_PW, EMAIL_SENDER, EMAIL_SMTP])
 def handle_new_rsvp(event: Event[DocumentSnapshot]) -> None:
     # 1. Retrieve the parent document ID (personId) from event.params
     parent_id = event.params["personId"]
@@ -75,3 +77,11 @@ def handle_new_rsvp(event: Event[DocumentSnapshot]) -> None:
     event_code = event.data.to_dict().get("eventcode") if event.data else None
 
     ##TODO send email to rsvp_id
+
+    user = EMAIL_USER.value
+    email_pw = EMAIL_PW.value
+    email_sender = EMAIL_SENDER.value
+    email_smtp = EMAIL_SMTP.value
+
+    
+
