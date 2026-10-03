@@ -26,7 +26,7 @@ set_global_options(max_instances=10)
 
 initialize_app()
 
-@https_fn.on_request(cors=False)
+@https_fn.on_request(cors=True)
 def rsvp(req: https_fn.Request) -> https_fn.Response:
 
     if "email" not in req.json or "eventcode" not in req.json:
@@ -43,7 +43,7 @@ def rsvp(req: https_fn.Request) -> https_fn.Response:
         p = Person(req.json["firstname"], req.json["lastname"], now, req.json["email"])
         r = Rsvp(now, req.json["eventcode"])
 
-        db = firestore.client()
+        db = firestore.client(database_id="default")
 
         db.collection("people").document(p.generate_id()).set(p.to_dict(), merge=True)
         db.collection("people").document(p.generate_id()).collection("rsvps").document(r.generate_id()).set(r.to_dict())
@@ -54,7 +54,7 @@ def rsvp(req: https_fn.Request) -> https_fn.Response:
     return https_fn.Response("RSVP successfully recorded.", status=200)
 
 # Triggered when a new document is created in the "rsvps" subcollection
-@on_document_created(document="people/{personId}/rsvps/{rsvpId}")
+@on_document_created(document="people/{personId}/rsvps/{rsvpId}", database="default")
 def handle_new_rsvp(event: Event[DocumentSnapshot]) -> None:
     # 1. Retrieve the parent document ID (personId) from event.params
     parent_id = event.params["personId"]
