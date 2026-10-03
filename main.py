@@ -40,12 +40,12 @@ def rsvp(req: https_fn.Request) -> https_fn.Response:
 
         now = datetime.now().astimezone(dateutil.tz.gettz(os.environ.get("America/New_York")))
         
-        p = Person(req.json["firstname"], req.json["lastname"], now, req.json["email"])
+        p = Person(req.json.get("firstname", ""), req.json.get("lastname", ""), now, req.json["email"], req.json["zip"])
         r = Rsvp(now, req.json["eventcode"])
 
         db = firestore.client(database_id="default")
 
-        db.collection("people").document(p.generate_id()).set(p.to_dict(), merge=True)
+        db.collection("people").document(p.generate_id()).set(p.to_dict(), merge=["zip"])
         db.collection("people").document(p.generate_id()).collection("rsvps").document(r.generate_id()).set(r.to_dict())
 
     except Exception as e:
