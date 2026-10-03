@@ -25,10 +25,10 @@ set_global_options(max_instances=10)
 
 initialize_app()
 
-EMAIL_USER = SecretParam("email-acct-user")
-EMAIL_PW = SecretParam("email-acct-pw")
-EMAIL_SENDER = SecretParam("email-sender")
-EMAIL_SMTP = SecretParam("email-smtp")
+EMAIL_USER = SecretParam("EMAIL_ACCT_USER")
+EMAIL_PW = SecretParam("EMAIL_ACCT_PW")
+EMAIL_SENDER = SecretParam("EMAIL_SENDER")
+EMAIL_SMTP = SecretParam("EMAIL_SMTP")
 
 @https_fn.on_request(cors=options.CorsOptions(
     cors_origins=["http://localhost:5500", r"https://.*\.web\.app", r"https://.*\.firebaseapp\.com", r"ashevilleforall"],
@@ -88,8 +88,3 @@ def handle_new_rsvp(event: Event[DocumentSnapshot]) -> None:
     email_smtp = EMAIL_SMTP.value
 
     send_email(user, email_pw, email_sender, parent_id, "Thank you for your RSVP!", content, email_smtp)
-
-
-
-    
-

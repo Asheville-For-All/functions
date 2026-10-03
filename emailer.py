@@ -3,7 +3,7 @@ from email.message import EmailMessage
 
 def send_email(usr, pw, sender, recipients, subject, html_content, smtpAddress, bcc=None, cc=None):
 
-    wrapper_front = """<!doctype html><html lang="en"><body style="background-color:white; color:#505050;"><div style="background-color:white; color:#505050; font-family: -apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, Adwaita Sans, Cantarell, Ubuntu, roboto, noto, helvetica, arial, sans-serif;;font-size: 14px;line-height: 150%;max-width:42em;left-margin:auto;right-margin:auto;">"""
+    wrapper_front = """<!doctype html><html lang="en"><body style="background-color:white; color:#505050;"><div style="background-color:white; color:#505050; font-family: -apple-system, BlinkMacSystemFont, avenir next, avenir, segoe ui, helvetica neue, Adwaita Sans, Cantarell, Ubuntu, roboto, noto, helvetica, arial, sans-serif;font-size: 14px;line-height: 150%;max-width:42em;left-margin:auto;right-margin:auto;">"""
 
     wrapper_back = """</div></body></html>"""
 
