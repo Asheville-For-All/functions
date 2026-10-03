@@ -1,6 +1,17 @@
 from firebase_functions import https_fn
 from firebase_functions.options import set_global_options
 from firebase_admin import initialize_app, firestore
+from firebase_functions import logger
+
+from firebase_functions.firestore_fn import (
+  on_document_created,
+  on_document_deleted,
+  on_document_updated,
+  on_document_written,
+  Event,
+  Change,
+  DocumentSnapshot,
+)
 
 from datetime import datetime
 import os
@@ -41,3 +52,17 @@ def rsvp(req: https_fn.Request) -> https_fn.Response:
         return https_fn.Response(f"An error occurred: {str(e)}", status=500)
 
     return https_fn.Response("RSVP successfully recorded.", status=200)
+
+# Triggered when a new document is created in the "rsvps" subcollection
+@on_document_created(document="people/{personId}/rsvps/{rsvpId}")
+def handle_new_rsvp(event: Event[DocumentSnapshot]) -> None:
+    # 1. Retrieve the parent document ID (personId) from event.params
+    parent_id = event.params["personId"]
+    
+    # 2. Retrieve the newly created RSVP document ID
+    rsvp_id = event.params["rsvpId"]
+    
+    # 3. Retrieve the actual document data
+    event_code = event.data.to_dict().get("eventcode") if event.data else None
+
+    ##TODO send email to rsvp_id
