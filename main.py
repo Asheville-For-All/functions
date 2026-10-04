@@ -100,8 +100,8 @@ def handle_new_rsvp(event: Event[DocumentSnapshot]) -> None:
 
     cal_links = get_calendar_links({
         "title": event_info.get("title"),
-        "start_time": adjusted_start,
-        "end_time": adjusted_end,
+        "start_time": event_info.get("start"),
+        "end_time": event_info.get("end"),
         "location": event_info.get("location"),
         "timezone": "America/New_York"    
     })
