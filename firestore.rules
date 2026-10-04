@@ -6,6 +6,10 @@ service cloud.firestore {
       allow write: if true;
       allow read: if false;
     }
+    match /events/{evnt}{
+      allow write: if false;
+      allow read: if true;
+    }
     match /people/{person}/rsvps/{rsvp} {
       allow write: if true;
       allow read: if false;
