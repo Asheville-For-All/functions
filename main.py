@@ -13,10 +13,11 @@ from firebase_functions.firestore_fn import (
 from datetime import datetime
 import os
 import re
-
 import dateutil
+import pytz
 
 from emailer import send_email
+from cal_links import get_calendar_links
 
 from models.person import Person
 from models.rsvp import Rsvp
@@ -90,11 +91,32 @@ def handle_new_rsvp(event: Event[DocumentSnapshot]) -> None:
 
     event_info = event_doc.to_dict()
 
+    tz = pytz.timezone('America/New_York')
+
+    event_info.get("start") = event_info.get("start").astimezone(tz)
+    event_info.get("end") = event_info.get("end").astimezone(tz)
+
     content += f"<p><em>{event_info.get("title")}<br/>{event_info.get("location")}<br/>{event_info.get("start").strftime("%a, %b %-d, %Y")}<br/>{event_info.get("start").strftime("%I:%M %p")}-{event_info.get("end").strftime("%I:%M %p")}</em></p>"
+
+    cal_links = get_calendar_links({
+        "title": event_info.get("title"),
+        "start_time": event_info.get("start"),
+        "end_time": event_info.get("end"),
+        "location": event_info.get("location"),
+        "timezone": "America/New_York"    
+    })
+
+    content += "<h2>Add to Calendar:</h2><p>"
+
+    for key, val in cal_links.items():
+        if key != "ics" and key != "apple":
+            content += f"<span style='background-color:gray;color:white;border-radius:4px;padding:4px;'><a href='{val}' style='color:white;'>{key.upper()}</a></span> "
+
+    content += "</p>"
 
     user = EMAIL_USER.value
     email_pw = EMAIL_PW.value
     email_sender = EMAIL_SENDER.value
     email_smtp = EMAIL_SMTP.value
 
-    send_email(user, email_pw, email_sender, parent_id, "Thank you for your RSVP!", content, email_smtp)
+    send_email(user, email_pw, email_sender, parent_id, "Thank you for your RSVP", content, email_smtp)

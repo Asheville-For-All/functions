@@ -1,6 +1,7 @@
 #https://pypi.org/project/calendar-link/
 
 from calendar_link import CalendarEvent, CalendarGenerator
+from pprint import pprint
 
 ## SAMPLE DICT
 event_data = {
@@ -22,8 +23,8 @@ def get_calendar_links(cal_info_dict: dict):
     for service, link in links.items():
         print(f"{service}: {link}")
 
-    del links["ics"] ##the ICS link isn't usable in emails
-
     return links
 
 ## keys are in lower case, so may want to upper case them.
+
+##pprint(get_calendar_links(event_data))
