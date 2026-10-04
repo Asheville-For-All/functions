@@ -45,12 +45,41 @@ def read_event_from_firestore(db, event_code):
     else:
         return None
 
+def read_RSVPs_from_event(db, event_code) -> list:
+
+    from google.cloud.firestore_v1.base_query import FieldFilter
+
+    query = db.collection_group("rsvps").where(filter=FieldFilter("eventcode", "==", event_code))
+
+    docs = query.stream()
+
+    rsvp_list = []
+    email_list = []
+
+    for d in docs:
+
+        if d.reference.parent.parent.id not in email_list:
+
+            s = d.reference.parent.parent.id
+            email_list.append(s)
+
+            person_ref = d.reference.parent.parent
+            doc = person_ref.get()
+            if doc.exists:
+                s += ", " + doc.to_dict().get("firstname", "")
+                s += ", " + doc.to_dict().get("lastname", "")
+
+            rsvp_list.append(s)
+
+    pp(rsvp_list)
+    
+    return rsvp_list
+
 if __name__ == "__main__":
 
     load_dotenv()
 
     db = initialize_firebase_service_account()
 
-    ##create_event_in_firestore(db)
-    read_event_from_firestore(db, "2026102200")
+    read_RSVPs_from_event(db, "2026102200")
     
