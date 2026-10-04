@@ -82,6 +82,16 @@ def handle_new_rsvp(event: Event[DocumentSnapshot]) -> None:
 
     content = "<p>Thank for your RSVP! We look forward to seeing you.</p><p>Here is the event information:</p>"
 
+    db = firestore.client(database_id="default")
+
+    event_doc = db.collection("events").document(event_code).get()
+    if event_doc.exists == False:
+        return https_fn.Response("Event not found.", status=404)
+
+    event_info = event_doc.to_dict()
+
+    content += f"<p><em>{event_info.get("title")}<br/>{event_info.get("location")}<br/>{event_info.get("start").strftime("%a, %b %-d, %Y")}<br/>{event_info.get("start").strftime("%I:%M %p")}-{event_info.get("end").strftime("%I:%M %p")}</em></p>"
+
     user = EMAIL_USER.value
     email_pw = EMAIL_PW.value
     email_sender = EMAIL_SENDER.value

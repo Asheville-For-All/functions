@@ -26,6 +26,4 @@ def get_calendar_links(cal_info_dict: dict):
 
     return links
 
-get_calendar_links(event_data)
-
 ## keys are in lower case, so may want to upper case them.
