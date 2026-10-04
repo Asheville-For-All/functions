@@ -1,4 +1,16 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "rsvps",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "eventcode",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "DENSE"
+    }
+  ],
   "fieldOverrides": []
 }

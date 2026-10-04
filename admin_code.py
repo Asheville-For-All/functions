@@ -1,11 +1,7 @@
-## TODO write code for any admin tasks taht won't go through the deployment process
-
 from dotenv import load_dotenv
 import os
 import json
-from datetime import datetime, date, time
-import dateutil
-from dateutil.relativedelta import relativedelta
+from datetime import datetime
 import firebase_admin
 from firebase_admin import credentials, firestore
 from pprint import pp

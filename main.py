@@ -32,7 +32,7 @@ EMAIL_SENDER = SecretParam("EMAIL_SENDER")
 EMAIL_SMTP = SecretParam("EMAIL_SMTP")
 
 @https_fn.on_request(cors=options.CorsOptions(
-    cors_origins=["http://localhost:5500", r"https://.*\.web\.app", r"https://.*\.firebaseapp\.com", r"ashevilleforall"],
+    cors_origins=["http://localhost:5500", r"https://.*\.web\.app", r"https://.*\.firebaseapp\.com", r".*ashevilleforall.*"],
     cors_methods=["get", "post"],
 ))
 def rsvpv2(req: https_fn.Request) -> https_fn.Response:
