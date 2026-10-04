@@ -93,15 +93,15 @@ def handle_new_rsvp(event: Event[DocumentSnapshot]) -> None:
 
     tz = pytz.timezone('America/New_York')
 
-    event_info.get("start") = event_info.get("start").astimezone(tz)
-    event_info.get("end") = event_info.get("end").astimezone(tz)
+    adjusted_start = event_info.get("start").astimezone(tz)
+    adjusted_end = event_info.get("end").astimezone(tz)
 
-    content += f"<p><em>{event_info.get("title")}<br/>{event_info.get("location")}<br/>{event_info.get("start").strftime("%a, %b %-d, %Y")}<br/>{event_info.get("start").strftime("%I:%M %p")}-{event_info.get("end").strftime("%I:%M %p")}</em></p>"
+    content += f"<p><em>{event_info.get("title")}<br/>{event_info.get("location")}<br/>{adjusted_start.strftime("%a, %b %-d, %Y")}<br/>{adjusted_start.strftime("%I:%M %p")}-{adjusted_end.strftime("%I:%M %p")}</em></p>"
 
     cal_links = get_calendar_links({
         "title": event_info.get("title"),
-        "start_time": event_info.get("start"),
-        "end_time": event_info.get("end"),
+        "start_time": adjusted_start,
+        "end_time": adjusted_end,
         "location": event_info.get("location"),
         "timezone": "America/New_York"    
     })
