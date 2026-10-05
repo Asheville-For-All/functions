@@ -12,7 +12,8 @@
         "firebase-debug.*.log",
         "*.local",
         "admin_code.py",
-        "gemini_code_misc_scratch.py"
+        "gemini_code_misc_scratch.py",
+        "gemini_code_misc_scratch*.py"
       ],
       "runtime": "python314"
     }

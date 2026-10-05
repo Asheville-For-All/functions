@@ -6,13 +6,16 @@ import firebase_admin
 from firebase_admin import credentials, firestore, storage
 from pprint import pp
 import pytz
+from cal_links import get_calendar_links
 
 def initialize_firebase_service_account() -> firestore.client:
 
     key_dict = json.loads(os.environ.get("FB_DICT"))
 
     cred = credentials.Certificate(key_dict)
-    firebase_admin.initialize_app(cred)
+    firebase_admin.initialize_app(cred, {
+        'storageBucket': os.environ.get("FB_STORAGE_BUCKET")
+    })
 
     db = firestore.client(database_id="default")
 
@@ -86,11 +89,27 @@ def get_public_url_for_existing_ics_file(event_code) -> str:
     ## blob.make_public() <-- should be public by default because of the function above.
     return blob.public_url
 
+def generate_and_store_ics(db, eventcode) -> str:
+
+    event_doc = db.collection("events").document(eventcode).get()
+
+    event_info = event_doc.to_dict()
+
+    cal_links = get_calendar_links({
+        "title": event_info.get("title"),
+        "start_time": event_info.get("start"),
+        "end_time": event_info.get("end"),
+        "location": event_info.get("location"),
+        "timezone": "America/New_York"    
+    })
+
+    ics_text = cal_links.get("ics")
+    return write_ics_to_file(eventcode, ics_text)
+
 if __name__ == "__main__":
 
     load_dotenv()
 
     db = initialize_firebase_service_account()
 
-    read_RSVPs_from_event(db, "2026102200")
-    
+    print(generate_and_store_ics(db, "2026102200"))
