@@ -26,4 +26,4 @@ class Person:
 
     @staticmethod
     def from_dict(data):
-        return Person(data.firstname, data.lastname, data.created, data.email, data.zip)
+        return Person(data.get("firstname", ""), data.get("lastname", ""), data["created"], data["email"], data["zip"])

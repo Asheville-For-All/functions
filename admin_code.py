@@ -3,7 +3,7 @@ import os
 import json
 from datetime import datetime
 import firebase_admin
-from firebase_admin import credentials, firestore
+from firebase_admin import credentials, firestore, storage
 from pprint import pp
 import pytz
 
@@ -70,6 +70,21 @@ def read_RSVPs_from_event(db, event_code) -> list:
     pp(rsvp_list)
     
     return rsvp_list
+
+def write_ics_to_file(event_code, ics_text:str) -> str:
+
+    bucket = storage.bucket()
+    blob = bucket.blob(f'ics/{event_code}/invite.ics')
+    blob.upload_from_string(ics_text)
+    blob.make_public()
+    return blob.public_url
+
+def get_public_url_for_existing_ics_file(event_code) -> str:
+
+    bucket = storage.bucket()
+    blob = bucket.blob(f'ics/{event_code}/invite.ics')
+    ## blob.make_public() <-- should be public by default because of the function above.
+    return blob.public_url
 
 if __name__ == "__main__":
 

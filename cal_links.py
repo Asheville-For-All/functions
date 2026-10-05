@@ -3,7 +3,7 @@
 from calendar_link import CalendarEvent, CalendarGenerator
 from pprint import pprint
 
-## SAMPLE DICT
+## SAMPLE DICT -- NB: things seem to work better if times are in UTC
 event_data = {
     "title": "Asheville For All Monthly Meetup",
     "start_time": "2026-10-22T18:00:00",
