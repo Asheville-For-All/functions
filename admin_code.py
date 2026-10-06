@@ -44,7 +44,7 @@ def read_event_from_firestore(db, event_code):
     else:
         return None
 
-def read_RSVPs_from_event(db, event_code) -> list:
+def read_RSVPs_from_event(db, event_code, csvStyle=False) -> str:
 
     from google.cloud.firestore_v1.base_query import FieldFilter
 
@@ -62,17 +62,27 @@ def read_RSVPs_from_event(db, event_code) -> list:
             s = d.reference.parent.parent.id
             email_list.append(s)
 
+            rsvp = {"email": s}
+
             person_ref = d.reference.parent.parent
             doc = person_ref.get()
             if doc.exists:
-                s += ", " + doc.to_dict().get("firstname", "")
-                s += ", " + doc.to_dict().get("lastname", "")
 
-            rsvp_list.append(s)
+                rsvp["firstname"] = doc.to_dict().get("firstname", "")
+                rsvp["lastname"] = doc.to_dict().get("lastname", "")
 
-    pp(rsvp_list)
-    
-    return rsvp_list
+            rsvp_list.append(rsvp)
+
+    if csvStyle:
+        csv = "email, firstname, lastname\n"
+        for line in rsvp_list:
+            csv += line["email"] + "," + line["firstname"] + "," + line["lastname"] + "\n"
+
+        print(csv)
+        return csv
+
+    print(json.dumps(rsvp_list))
+    return json.dumps(rsvp_list)
 
 def write_ics_to_file(event_code, ics_text:str) -> str:
 
@@ -112,4 +122,4 @@ if __name__ == "__main__":
 
     db = initialize_firebase_service_account()
 
-    print(generate_and_store_ics(db, "2026102200"))
+    read_RSVPs_from_event(db, "2026102200", csvStyle=True)

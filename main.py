@@ -53,6 +53,8 @@ def rsvpv2(req: https_fn.Request) -> https_fn.Response:
 
         db = firestore.client(database_id="default")
 
+        ##TODO -- the created field isn't being set on the firestore, because its not set to merge. I think I'm going to have to check if the record exists first, and then add it to the merge array if it doesn't.
+
         mergearray = ["zip"]
         if req.form.get("firstname", "") != "":
             mergearray.append("firstname")

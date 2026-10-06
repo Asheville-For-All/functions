@@ -1,5 +1,7 @@
 from datetime import datetime
 
+import pytz
+
 class Person:
 
     firstname: str
@@ -26,4 +28,7 @@ class Person:
 
     @staticmethod
     def from_dict(data):
-        return Person(data.get("firstname", ""), data.get("lastname", ""), data["created"], data["email"], data["zip"])
+
+        tz = pytz.timezone('America/New_York')
+        
+        return Person(data.get("firstname", ""), data.get("lastname", ""), data.get("created", datetime.now().astimezone(tz)), data["email"], data["zip"])
