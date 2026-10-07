@@ -3,12 +3,12 @@ import os
 import json
 from datetime import datetime
 import firebase_admin
-from firebase_admin import credentials, storage, firestore_async
+from firebase_admin import credentials, storage, firestore
 from pprint import pp
 import pytz
 from cal_links import get_calendar_links
 
-def initialize_firebase_service_account() -> firestore_async.client:
+def initialize_firebase_service_account() -> firestore.client:
 
     key_dict = json.loads(os.environ.get("FB_DICT"))
 
@@ -17,11 +17,11 @@ def initialize_firebase_service_account() -> firestore_async.client:
         'storageBucket': os.environ.get("FB_STORAGE_BUCKET")
     })
 
-    db = firestore_async.client(database_id="default")
+    db = firestore.client(database_id="default")
 
     return db
 
-async def create_event_in_firestore(db):
+def create_event_in_firestore(db):
 
     tz = pytz.timezone('America/New_York')
 
@@ -33,7 +33,7 @@ async def create_event_in_firestore(db):
         "location": "Hi-Wire Brewing - River Arts District, 284 Lyman St., Asheville NC 28801"
     }
 
-    await db.collection("events").document(event_data["event_code"]).set(event_data)
+    db.collection("events").document(event_data["event_code"]).set(event_data)
 
 async def read_event_from_firestore(db, event_code):
 
@@ -44,7 +44,7 @@ async def read_event_from_firestore(db, event_code):
     else:
         return None
 
-async def read_RSVPs_from_event(db, event_code, csvStyle=False) -> str:
+def read_RSVPs_from_event(db, event_code, csvStyle=False) -> str:
 
     from google.cloud.firestore_v1.base_query import FieldFilter
 
@@ -55,7 +55,7 @@ async def read_RSVPs_from_event(db, event_code, csvStyle=False) -> str:
     rsvp_list = []
     email_list = []
 
-    async for d in docs:
+    for d in docs:
 
         if d.reference.parent.parent.id not in email_list:
 
@@ -65,7 +65,7 @@ async def read_RSVPs_from_event(db, event_code, csvStyle=False) -> str:
             rsvp = {"email": s}
 
             person_ref = d.reference.parent.parent
-            doc = await person_ref.get()
+            doc = person_ref.get()
             if doc.exists:
 
                 rsvp["firstname"] = doc.to_dict().get("firstname", "")
@@ -99,9 +99,9 @@ def get_public_url_for_existing_ics_file(event_code) -> str:
     ## blob.make_public() <-- should be public by default because of the function above.
     return blob.public_url
 
-async def generate_and_store_ics(db, eventcode) -> str:
+def generate_and_store_ics(db, eventcode) -> str:
 
-    event_doc = await db.collection("events").document(eventcode).get()
+    event_doc = db.collection("events").document(eventcode).get()
 
     event_info = event_doc.to_dict()
 
