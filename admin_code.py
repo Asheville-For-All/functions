@@ -3,12 +3,12 @@ import os
 import json
 from datetime import datetime
 import firebase_admin
-from firebase_admin import credentials, firestore, storage, firestore_async
+from firebase_admin import credentials, storage, firestore_async
 from pprint import pp
 import pytz
 from cal_links import get_calendar_links
 
-def initialize_firebase_service_account() -> firestore.client:
+def initialize_firebase_service_account() -> firestore_async.client:
 
     key_dict = json.loads(os.environ.get("FB_DICT"))
 
@@ -17,7 +17,7 @@ def initialize_firebase_service_account() -> firestore.client:
         'storageBucket': os.environ.get("FB_STORAGE_BUCKET")
     })
 
-    db = firestore.client(database_id="default")
+    db = firestore_async.client(database_id="default")
 
     return db
 

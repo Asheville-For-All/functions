@@ -1,6 +1,6 @@
 from firebase_functions import https_fn, options
 from firebase_functions.options import set_global_options
-from firebase_admin import initialize_app, firestore, firestore_async
+from firebase_admin import initialize_app, firestore_async
 from firebase_functions import logger
 from firebase_functions.params import SecretParam
 
