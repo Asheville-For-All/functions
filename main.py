@@ -1,6 +1,6 @@
 from firebase_functions import https_fn, options
 from firebase_functions.options import set_global_options
-from firebase_admin import initialize_app, firestore
+from firebase_admin import initialize_app, firestore, firestore_async
 from firebase_functions import logger
 from firebase_functions.params import SecretParam
 
@@ -35,7 +35,7 @@ EMAIL_SMTP = SecretParam("EMAIL_SMTP")
     cors_origins=["http://localhost:5500", r"https://.*\.web\.app", r"https://.*\.firebaseapp\.com", r".*ashevilleforall.*"],
     cors_methods=["get", "post"],
 ))
-def rsvpv2(req: https_fn.Request) -> https_fn.Response:
+async def rsvpv2(req: https_fn.Request) -> https_fn.Response:
 
     if "email" not in req.form or "eventcode" not in req.form or "zip" not in req.form:
         return https_fn.Response("Missing required fields.", status=400)
@@ -51,7 +51,7 @@ def rsvpv2(req: https_fn.Request) -> https_fn.Response:
         p = Person(req.form.get("firstname", ""), req.form.get("lastname", ""), now, req.form.get("email"), req.form.get("zip"))
         r = Rsvp(now, req.form.get("eventcode"))
 
-        db = firestore.client(database_id="default")
+        db = firestore_async.client(database_id="default")
 
         ##TODO -- the created field isn't being set on the firestore, because its not set to merge. I think I'm going to have to check if the record exists first, and then add it to the merge array if it doesn't.
 
@@ -61,8 +61,8 @@ def rsvpv2(req: https_fn.Request) -> https_fn.Response:
         if req.form.get("lastname", "") != "":
             mergearray.append("lastname")
 
-        db.collection("people").document(p.generate_id()).set(p.to_dict(), merge=mergearray)
-        db.collection("people").document(p.generate_id()).collection("rsvps").document(r.generate_id()).set(r.to_dict())
+        await db.collection("people").document(p.generate_id()).set(p.to_dict(), merge=mergearray)
+        await db.collection("people").document(p.generate_id()).collection("rsvps").document(r.generate_id()).set(r.to_dict())
 
     except Exception as e:
         return https_fn.Response(f"An error occurred: {str(e)}", status=500)
@@ -71,7 +71,7 @@ def rsvpv2(req: https_fn.Request) -> https_fn.Response:
 
 # Triggered when a new document is created in the "rsvps" subcollection
 @on_document_created(document="people/{personId}/rsvps/{rsvpId}", database="default", secrets=[EMAIL_USER, EMAIL_PW, EMAIL_SENDER, EMAIL_SMTP])
-def handle_new_rsvp(event: Event[DocumentSnapshot]) -> None:
+async def handle_new_rsvp(event: Event[DocumentSnapshot]) -> None:
     # 1. Retrieve the parent document ID (personId) from event.params
     parent_id = event.params["personId"]
     
@@ -79,15 +79,15 @@ def handle_new_rsvp(event: Event[DocumentSnapshot]) -> None:
     rsvp_id = event.params["rsvpId"]
     
     # 3. Retrieve the actual document data
-    event_code = event.data.to_dict().get("eventcode") if event.data else None
+    event_code = await event.data.to_dict().get("eventcode") if event.data else None
 
     ##TODO send email to person_id. Get the event info from firebase using the eventcode.
 
     content = "<p>Thank for your RSVP! We look forward to seeing you.</p><p>Here is the event information:</p>"
 
-    db = firestore.client(database_id="default")
+    db = firestore_async.client(database_id="default")
 
-    event_doc = db.collection("events").document(event_code).get()
+    event_doc = await db.collection("events").document(event_code).get()
     if event_doc.exists == False:
         return https_fn.Response("Event not found.", status=404)
 
