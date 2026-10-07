@@ -35,10 +35,10 @@ def create_event_in_firestore(db):
 
     db.collection("events").document(event_data["event_code"]).set(event_data)
 
-async def read_event_from_firestore(db, event_code):
+def read_event_from_firestore(db, event_code):
 
     event_ref = db.collection("events").document(event_code)
-    event_doc = await event_ref.get()
+    event_doc = event_ref.get()
     if event_doc.exists:
         pp(event_doc.to_dict())
     else:
