@@ -3,7 +3,7 @@ import os
 import json
 from datetime import datetime
 import firebase_admin
-from firebase_admin import credentials, firestore, storage
+from firebase_admin import credentials, storage, firestore
 from pprint import pp
 import pytz
 from cal_links import get_calendar_links
@@ -87,7 +87,7 @@ def read_RSVPs_from_event(db, event_code, csvStyle=False) -> str:
 def write_ics_to_file(event_code, ics_text:str) -> str:
 
     bucket = storage.bucket()
-    blob = bucket.blob(f'ics/{event_code}/invite.ics')
+    blob = bucket.blob(f'ics/{event_code}/calendar.ics')
     blob.upload_from_string(ics_text)
     blob.make_public()
     return blob.public_url
