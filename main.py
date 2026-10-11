@@ -6,6 +6,7 @@ from firebase_functions.params import SecretParam
 
 from firebase_functions.firestore_fn import (
   on_document_created,
+  on_document_written,
   Event,
   DocumentSnapshot
 )
@@ -22,6 +23,8 @@ from cal_links import get_calendar_links
 from models.person import Person
 from models.rsvp import Rsvp
 
+import requests
+
 set_global_options(max_instances=10)
 
 initialize_app()
@@ -30,6 +33,7 @@ EMAIL_USER = SecretParam("EMAIL_ACCT_USER")
 EMAIL_PW = SecretParam("EMAIL_ACCT_PW")
 EMAIL_SENDER = SecretParam("EMAIL_SENDER")
 EMAIL_SMTP = SecretParam("EMAIL_SMTP")
+ACTION_NETWORK_API_KEY = SecretParam("ACTION_NETWORK_API_KEY")
 
 @https_fn.on_request(cors=options.CorsOptions(
     cors_origins=["http://localhost:5500", r"https://.*\.web\.app", r"https://.*\.firebaseapp\.com", r".*ashevilleforall.*"],
@@ -48,7 +52,7 @@ def rsvpv2(req: https_fn.Request) -> https_fn.Response:
 
         now = datetime.now().astimezone(dateutil.tz.gettz(os.environ.get("America/New_York")))
         
-        p = Person(req.form.get("firstname", ""), req.form.get("lastname", ""), now, req.form.get("email"), req.form.get("zip"))
+        p = Person(req.form.get("firstname", ""), req.form.get("lastname", ""), now, req.form.get("email"), req.form.get("zip"), "rsvp")
         r = Rsvp(now, req.form.get("eventcode"))
 
         db = firestore.client(database_id="default")
@@ -57,7 +61,7 @@ def rsvpv2(req: https_fn.Request) -> https_fn.Response:
 
         doc = ref.get()
 
-        mergearray = ["zip"]
+        mergearray = ["zip", "email"]
         if req.form.get("firstname", "") != "":
             mergearray.append("firstname")
         if req.form.get("lastname", "") != "":
@@ -85,8 +89,6 @@ def handle_new_rsvp(event: Event[DocumentSnapshot]) -> None:
     
     # 3. Retrieve the actual document data
     event_code = event.data.to_dict().get("eventcode") if event.data else None
-
-    ##TODO send email to person_id. Get the event info from firebase using the eventcode.
 
     content = "<p>Thank for your RSVP! We look forward to seeing you.</p><p>Here is the event information:</p>"
 
@@ -127,3 +129,80 @@ def handle_new_rsvp(event: Event[DocumentSnapshot]) -> None:
     email_smtp = EMAIL_SMTP.value
 
     send_email(user, email_pw, email_sender, parent_id, "Thank you for your RSVP", content, email_smtp)
+
+@https_fn.on_request(cors=options.CorsOptions(
+    cors_origins=["http://localhost:5500", r"https://.*\.web\.app", r"https://.*\.firebaseapp\.com", r".*ashevilleforall.*"],
+    cors_methods=["get", "post"],
+))
+def subscribe(req: https_fn.Request) -> https_fn.Response:
+
+    if "email" not in req.form or "zip" not in req.form:
+        return https_fn.Response("Missing required fields.", status=400)
+
+    regex = re.compile(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+')
+    if re.fullmatch(regex, req.form.get("email")) == False:
+        return https_fn.Response("Invalid email address.", status=400)
+
+    try:
+
+        now = datetime.now().astimezone(dateutil.tz.gettz(os.environ.get("America/New_York")))
+        
+        p = Person(req.form.get("firstname", ""), req.form.get("lastname", ""), now, req.form.get("email"), req.form.get("zip"), "subscribe")
+
+        db = firestore.client(database_id="default")
+
+        ref = db.collection("people").document(req.form.get("email"))
+
+        doc = ref.get()
+
+        mergearray = ["zip", "email"]
+        if req.form.get("firstname", "") != "":
+            mergearray.append("firstname")
+        if req.form.get("lastname", "") != "":
+            mergearray.append("lastname")
+
+        if not doc.exists or doc.to_dict().get("created") == None:
+            mergearray.append("created")
+
+        db.collection("people").document(p.generate_id()).set(p.to_dict(), merge=mergearray)
+
+    except Exception as e:
+        return https_fn.Response(f"An error occurred: {str(e)}", status=500)
+
+    return https_fn.Response("Subscription successfully recorded.", status=200)
+
+@on_document_written(document="people/{personId}", database="default", secrets=[ACTION_NETWORK_API_KEY])
+def handle_person_updated(event: Event[DocumentSnapshot]) -> None:
+
+    url = "https://actionnetwork.org/api/v2/people/"
+
+    email = event.params.get("personId")
+
+    db = firestore.client(database_id="default")
+
+    person = Person.from_dict(db.collection("people").document(email).get().to_dict())
+
+    payload = {
+  "person" : {
+    "postal_addresses": [ { "postal_code" : person.zip }],
+    "email_addresses": [ { "address" : person.email } ]
+  }
+}
+
+    if person.firstname != None and person.firstname != "":
+        payload["person"]["given_name"] = person.firstname
+    if person.lastname != None and person.lastname != "":
+        payload["person"]["family_name"] = person.lastname
+
+    if person.last_event_trigger == "subscribe":
+        payload["person"]["status"] = "subscribed"
+
+    headers = {'OSDI-API-Token': ACTION_NETWORK_API_KEY.value,"Content-Type": "application/json"}
+
+    r = requests.post(url, json=payload, headers=headers)
+
+    return_header = r.headers
+    return_content = r.text
+
+    logger.log(f"Return Header: {return_header}")
+    logger.log(f"Return Content: {return_content}")
