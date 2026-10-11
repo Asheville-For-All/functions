@@ -22,6 +22,8 @@ from cal_links import get_calendar_links
 from models.person import Person
 from models.rsvp import Rsvp
 
+import requests
+
 set_global_options(max_instances=10)
 
 initialize_app()
@@ -30,6 +32,7 @@ EMAIL_USER = SecretParam("EMAIL_ACCT_USER")
 EMAIL_PW = SecretParam("EMAIL_ACCT_PW")
 EMAIL_SENDER = SecretParam("EMAIL_SENDER")
 EMAIL_SMTP = SecretParam("EMAIL_SMTP")
+ACTION_NETWORK_API_KEY = SecretParam("ACTION_NETWORK_API_KEY")
 
 @https_fn.on_request(cors=options.CorsOptions(
     cors_origins=["http://localhost:5500", r"https://.*\.web\.app", r"https://.*\.firebaseapp\.com", r".*ashevilleforall.*"],
@@ -134,10 +137,72 @@ def handle_new_rsvp(event: Event[DocumentSnapshot]) -> None:
 ))
 def subscribe(req: https_fn.Request) -> https_fn.Response:
 
-    ...
+    if "email" not in req.form or "zip" not in req.form:
+        return https_fn.Response("Missing required fields.", status=400)
+
+    regex = re.compile(r'([A-Za-z0-9]+[.-_])*[A-Za-z0-9]+@[A-Za-z0-9-]+(\.[A-Z|a-z]{2,})+')
+    if re.fullmatch(regex, req.form.get("email")) == False:
+        return https_fn.Response("Invalid email address.", status=400)
+
+    try:
+
+        now = datetime.now().astimezone(dateutil.tz.gettz(os.environ.get("America/New_York")))
+        
+        p = Person(req.form.get("firstname", ""), req.form.get("lastname", ""), now, req.form.get("email"), req.form.get("zip"))
+
+        db = firestore.client(database_id="default")
+
+        ref = db.collection("people").document(req.form.get("email"))
+
+        doc = ref.get()
+
+        mergearray = ["zip"]
+        if req.form.get("firstname", "") != "":
+            mergearray.append("firstname")
+        if req.form.get("lastname", "") != "":
+            mergearray.append("lastname")
+
+        if not doc.exists or doc.to_dict().get("created") == None:
+            mergearray.append("created")
+
+        db.collection("people").document(p.generate_id()).set(p.to_dict(), merge=mergearray)
+
+    except Exception as e:
+        return https_fn.Response(f"An error occurred: {str(e)}", status=500)
+
+    return https_fn.Response("Subscription successfully recorded.", status=200)
 
 # Triggered when a new document is created in the "people" subcollection
-@on_document_created(document="people/{personId}", database="default")
+@on_document_created(document="people/{personId}", database="default", secrets=[ACTION_NETWORK_API_KEY])
 def handle_new_subscribe(event: Event[DocumentSnapshot]) -> None:
 
-    ...
+    url = "https://actionnetwork.org/docs/v2/post-people/"
+
+    email = event.params.get("email")
+
+    db = firestore.client(database_id="default")
+
+    person = Person.from_dict(db.collection("people").document(email).get().to_dict())
+
+    payload = {
+  "person" : {
+    "family_name": person.lastname,
+    "given_name": person.firstname,
+    "status": "subscribed",
+    "postal_addresses": [ { "postal_code" : person.zip }],
+    "email_addresses": [ { "address" : person.email } ]
+  },
+  "add_tags": [
+    "added_by_afa_app_form"
+  ]
+}
+
+    headers = {'OSDI-API-Token': ACTION_NETWORK_API_KEY.value,"Content-Type": "application/json"}
+
+    r = requests.post(url, json=payload, headers=headers)
+
+    return_header = r.headers
+    return_content = r.text
+
+    print("Return Header:", return_header)
+    print("Return Content:", return_content)
