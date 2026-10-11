@@ -172,7 +172,7 @@ def subscribe(req: https_fn.Request) -> https_fn.Response:
     return https_fn.Response("Subscription successfully recorded.", status=200)
 
 @on_document_updated(document="people/{personId}", database="default", secrets=[ACTION_NETWORK_API_KEY])
-def handle_new_subscribe(event: Event[DocumentSnapshot]) -> None:
+def handle_person_updated(event: Event[DocumentSnapshot]) -> None:
 
     url = "https://actionnetwork.org/docs/v2/post-people/"
 
