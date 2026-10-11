@@ -127,3 +127,17 @@ def handle_new_rsvp(event: Event[DocumentSnapshot]) -> None:
     email_smtp = EMAIL_SMTP.value
 
     send_email(user, email_pw, email_sender, parent_id, "Thank you for your RSVP", content, email_smtp)
+
+@https_fn.on_request(cors=options.CorsOptions(
+    cors_origins=["http://localhost:5500", r"https://.*\.web\.app", r"https://.*\.firebaseapp\.com", r".*ashevilleforall.*"],
+    cors_methods=["get", "post"],
+))
+def subscribe(req: https_fn.Request) -> https_fn.Response:
+
+    ...
+
+# Triggered when a new document is created in the "people" subcollection
+@on_document_created(document="people/{personId}", database="default")
+def handle_new_subscribe(event: Event[DocumentSnapshot]) -> None:
+
+    ...
