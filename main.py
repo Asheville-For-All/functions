@@ -6,7 +6,7 @@ from firebase_functions.params import SecretParam
 
 from firebase_functions.firestore_fn import (
   on_document_created,
-  on_document_updated,
+  on_document_written,
   Event,
   DocumentSnapshot
 )
@@ -61,7 +61,7 @@ def rsvpv2(req: https_fn.Request) -> https_fn.Response:
 
         doc = ref.get()
 
-        mergearray = ["zip"]
+        mergearray = ["zip", "email"]
         if req.form.get("firstname", "") != "":
             mergearray.append("firstname")
         if req.form.get("lastname", "") != "":
@@ -155,7 +155,7 @@ def subscribe(req: https_fn.Request) -> https_fn.Response:
 
         doc = ref.get()
 
-        mergearray = ["zip"]
+        mergearray = ["zip", "email"]
         if req.form.get("firstname", "") != "":
             mergearray.append("firstname")
         if req.form.get("lastname", "") != "":
@@ -171,7 +171,7 @@ def subscribe(req: https_fn.Request) -> https_fn.Response:
 
     return https_fn.Response("Subscription successfully recorded.", status=200)
 
-@on_document_updated(document="people/{personId}", database="default", secrets=[ACTION_NETWORK_API_KEY])
+@on_document_written(document="people/{personId}", database="default", secrets=[ACTION_NETWORK_API_KEY])
 def handle_person_updated(event: Event[DocumentSnapshot]) -> None:
 
     url = "https://actionnetwork.org/docs/v2/post-people/"
