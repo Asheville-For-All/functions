@@ -174,7 +174,7 @@ def subscribe(req: https_fn.Request) -> https_fn.Response:
 @on_document_written(document="people/{personId}", database="default", secrets=[ACTION_NETWORK_API_KEY])
 def handle_person_updated(event: Event[DocumentSnapshot]) -> None:
 
-    url = "https://actionnetwork.org/docs/v2/post-people/"
+    url = "https://actionnetwork.org/api/v2/people/"
 
     email = event.params.get("personId")
 
