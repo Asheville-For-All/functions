@@ -178,7 +178,7 @@ def handle_new_subscribe(event: Event[DocumentSnapshot]) -> None:
 
     url = "https://actionnetwork.org/docs/v2/post-people/"
 
-    email = event.params.get("email")
+    email = event.params.get("personId")
 
     db = firestore.client(database_id="default")
 
@@ -186,8 +186,6 @@ def handle_new_subscribe(event: Event[DocumentSnapshot]) -> None:
 
     payload = {
   "person" : {
-    "family_name": person.lastname,
-    "given_name": person.firstname,
     "status": "subscribed",
     "postal_addresses": [ { "postal_code" : person.zip }],
     "email_addresses": [ { "address" : person.email } ]
@@ -196,6 +194,11 @@ def handle_new_subscribe(event: Event[DocumentSnapshot]) -> None:
     "added_by_afa_app_form"
   ]
 }
+
+    if person.firstname != None and person.firstname != "":
+        payload["person"]["given_name"] = person.firstname
+    if person.lastname != None and person.lastname != "":
+        payload["person"]["family_name"] = person.lastname
 
     headers = {'OSDI-API-Token': ACTION_NETWORK_API_KEY.value,"Content-Type": "application/json"}
 
