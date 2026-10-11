@@ -6,6 +6,7 @@ from firebase_functions.params import SecretParam
 
 from firebase_functions.firestore_fn import (
   on_document_created,
+  on_document_updated,
   Event,
   DocumentSnapshot
 )
@@ -51,7 +52,7 @@ def rsvpv2(req: https_fn.Request) -> https_fn.Response:
 
         now = datetime.now().astimezone(dateutil.tz.gettz(os.environ.get("America/New_York")))
         
-        p = Person(req.form.get("firstname", ""), req.form.get("lastname", ""), now, req.form.get("email"), req.form.get("zip"))
+        p = Person(req.form.get("firstname", ""), req.form.get("lastname", ""), now, req.form.get("email"), req.form.get("zip"), "rsvp")
         r = Rsvp(now, req.form.get("eventcode"))
 
         db = firestore.client(database_id="default")
@@ -88,8 +89,6 @@ def handle_new_rsvp(event: Event[DocumentSnapshot]) -> None:
     
     # 3. Retrieve the actual document data
     event_code = event.data.to_dict().get("eventcode") if event.data else None
-
-    ##TODO send email to person_id. Get the event info from firebase using the eventcode.
 
     content = "<p>Thank for your RSVP! We look forward to seeing you.</p><p>Here is the event information:</p>"
 
@@ -148,7 +147,7 @@ def subscribe(req: https_fn.Request) -> https_fn.Response:
 
         now = datetime.now().astimezone(dateutil.tz.gettz(os.environ.get("America/New_York")))
         
-        p = Person(req.form.get("firstname", ""), req.form.get("lastname", ""), now, req.form.get("email"), req.form.get("zip"))
+        p = Person(req.form.get("firstname", ""), req.form.get("lastname", ""), now, req.form.get("email"), req.form.get("zip"), "subscribe")
 
         db = firestore.client(database_id="default")
 
@@ -172,8 +171,7 @@ def subscribe(req: https_fn.Request) -> https_fn.Response:
 
     return https_fn.Response("Subscription successfully recorded.", status=200)
 
-# Triggered when a new document is created in the "people" subcollection
-@on_document_created(document="people/{personId}", database="default", secrets=[ACTION_NETWORK_API_KEY])
+@on_document_updated(document="people/{personId}", database="default", secrets=[ACTION_NETWORK_API_KEY])
 def handle_new_subscribe(event: Event[DocumentSnapshot]) -> None:
 
     url = "https://actionnetwork.org/docs/v2/post-people/"
@@ -186,19 +184,18 @@ def handle_new_subscribe(event: Event[DocumentSnapshot]) -> None:
 
     payload = {
   "person" : {
-    "status": "subscribed",
     "postal_addresses": [ { "postal_code" : person.zip }],
     "email_addresses": [ { "address" : person.email } ]
-  },
-  "add_tags": [
-    "added_by_afa_app_form"
-  ]
+  }
 }
 
     if person.firstname != None and person.firstname != "":
         payload["person"]["given_name"] = person.firstname
     if person.lastname != None and person.lastname != "":
         payload["person"]["family_name"] = person.lastname
+
+    if person.last_event_trigger == "subscribe":
+        payload["person"]["status"] = "subscribed"
 
     headers = {'OSDI-API-Token': ACTION_NETWORK_API_KEY.value,"Content-Type": "application/json"}
 
@@ -207,5 +204,5 @@ def handle_new_subscribe(event: Event[DocumentSnapshot]) -> None:
     return_header = r.headers
     return_content = r.text
 
-    print("Return Header:", return_header)
-    print("Return Content:", return_content)
+    logger.log(f"Return Header: {return_header}")
+    logger.log(f"Return Content: {return_content}")
