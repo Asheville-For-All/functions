@@ -7,6 +7,7 @@ class Event:
     start: datetime
     end: datetime
     title: str
+    emailedlist: list
 
     def __init__(self, event_code: str, location: str, start: datetime, end: datetime, title: str):
         self.event_code = event_code
@@ -14,6 +15,7 @@ class Event:
         self.start = start
         self.end = end
         self.title = title
+        self.emailedlist = []
 
     def to_dict(self):
 

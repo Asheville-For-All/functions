@@ -17,7 +17,8 @@ import re
 import dateutil
 import pytz
 
-from emailer import send_email
+import emailer
+
 from cal_links import get_calendar_links
 
 from models.person import Person
@@ -90,8 +91,6 @@ def handle_new_rsvp(event: Event[DocumentSnapshot]) -> None:
     # 3. Retrieve the actual document data
     event_code = event.data.to_dict().get("eventcode") if event.data else None
 
-    content = "<p>Thank for your RSVP! We look forward to seeing you.</p><p>Here is the event information:</p>"
-
     db = firestore.client(database_id="default")
 
     event_doc = db.collection("events").document(event_code).get()
@@ -100,35 +99,12 @@ def handle_new_rsvp(event: Event[DocumentSnapshot]) -> None:
 
     event_info = event_doc.to_dict()
 
-    tz = pytz.timezone('America/New_York')
-
-    adjusted_start = event_info.get("start").astimezone(tz)
-    adjusted_end = event_info.get("end").astimezone(tz)
-
-    content += f"<p><em>{event_info.get("title")}<br/>{event_info.get("location")}<br/>{adjusted_start.strftime("%a, %b %-d, %Y")}<br/>{adjusted_start.strftime("%I:%M %p")}-{adjusted_end.strftime("%I:%M %p")}</em></p>"
-
-    cal_links = get_calendar_links({
-        "title": event_info.get("title"),
-        "start_time": event_info.get("start"),
-        "end_time": event_info.get("end"),
-        "location": event_info.get("location"),
-        "timezone": "America/New_York"    
-    })
-
-    content += "<h2>Add to Calendar:</h2><p>"
-
-    for key, val in cal_links.items():
-        if key != "ics" and key != "apple":
-            content += f"<span style='background-color:gray;color:white;border-radius:4px;padding:4px;'><a href='{val}' style='color:white;'>{key.upper()}</a></span> "
-
-    content += "</p>"
-
     user = EMAIL_USER.value
     email_pw = EMAIL_PW.value
     email_sender = EMAIL_SENDER.value
     email_smtp = EMAIL_SMTP.value
 
-    send_email(user, email_pw, email_sender, parent_id, "Thank you for your RSVP", content, email_smtp)
+    emailer.send_event_rsvp_confirmation(event_info, user, email_pw, email_sender, parent_id, email_smtp)
 
 @https_fn.on_request(cors=options.CorsOptions(
     cors_origins=["http://localhost:5500", r"https://.*\.web\.app", r"https://.*\.firebaseapp\.com", r".*ashevilleforall.*"],

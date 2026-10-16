@@ -13,7 +13,9 @@
         "*.local",
         "admin_code.py",
         "gemini_code_misc_scratch.py",
-        "gemini_code_misc_scratch*.py"
+        "gemini_code_misc_scratch*.py",
+        "cron_code.py",
+        "email-test-mailgun.py"
       ],
       "runtime": "python314"
     }
