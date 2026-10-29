@@ -1,6 +1,8 @@
 from dotenv import load_dotenv
 import os
 import json
+import uuid
+from urllib.parse import quote
 from datetime import datetime
 import firebase_admin
 from firebase_admin import credentials, storage, firestore
@@ -92,6 +94,26 @@ def write_ics_to_file(event_code, ics_text:str) -> str:
     blob.make_public()
     return blob.public_url
 
+def upload_file_to_bucket(file_path: str, destination_name: str | None = None) -> str:
+    """Upload a local file to the default storage bucket and return a tokenized download URL.
+
+    destination_name defaults to the file's base name.
+    """
+
+    if not os.path.isfile(file_path):
+        raise FileNotFoundError(f"File not found: {file_path}")
+
+    bucket = storage.bucket()
+    blob = bucket.blob(destination_name or os.path.basename(file_path))
+    token = str(uuid.uuid4())
+    blob.metadata = {"firebaseStorageDownloadTokens": token}
+    blob.cache_control = "public, max-age=31536000"
+    blob.upload_from_filename(file_path)
+    return (
+        f"https://firebasestorage.googleapis.com/v0/b/{bucket.name}/o/"
+        f"{quote(blob.name, safe='')}?alt=media&token={token}"
+    )
+
 def get_public_url_for_existing_ics_file(event_code) -> str:
 
     bucket = storage.bucket()
@@ -122,4 +144,5 @@ if __name__ == "__main__":
 
     db = initialize_firebase_service_account()
 
-    read_RSVPs_from_event(db, "2026102200", csvStyle=True)
+    print(upload_file_to_bucket("test2.txt", "test2.txt"))
+
