@@ -48,11 +48,19 @@ def send_event_rsvp_confirmation(event_info: dict, usr, pw, sender, recipients, 
 
     send_email(usr, pw, sender, recipients, "Thank you for your RSVP", content, smtpAddress)
 
-def send_event_reminder_email(event_info: dict, usr, pw, sender, recipients, smtpAddress, bcc=None, cc=None):
+def send_event_reminder_email(event_info: dict, usr, pw, sender, recipients, smtpAddress, bcc=None, cc=None, topper=False):
 
     subject = "Your Event Is Coming Up"
     
-    ...#TODO
+    content = "<p>We look forward to seeing you! Here is the event information:</p>"
+    content += build_event_info_html(event_info)
+
+    if topper:
+        content += "<p><b>How will you know how to find us?</b> Look for the small “table topper” that says “Asheville For All”!</p>"
+
+    content += build_cal_links_html(event_info)
+
+    send_email(usr, pw, sender, recipients, subject, content, smtpAddress)
 
 def build_cal_links_html(event_info: dict) -> str:
 

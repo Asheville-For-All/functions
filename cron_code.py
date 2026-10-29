@@ -12,6 +12,8 @@ from models.rsvp import Rsvp
 import emailer
 import time
 
+##TODO : determine if this is running on google firebase or not. Update secrets / evironment vars as needed.
+
 def initialize_firebase_service_account() -> firestore.client:
 
     key_dict = json.loads(os.environ.get("FB_DICT"))
@@ -69,7 +71,7 @@ def send_reminders_for_upcoming_events(db):
 
                 #TODO need to get secrets and/or env secrets? here to send email
 
-                emailer.send_event_reminder_email(TODO)
+                emailer.send_event_reminder_email(TODO) #TODO determine secrets/etc depending on what environemnt this will run in
 
                 emailedlist.append(e)
 
