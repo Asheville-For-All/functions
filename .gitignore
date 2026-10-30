@@ -103,3 +103,4 @@ tempCodeRunnerFile.py
 
 *.local
 email-test-mailgun.py
+.agents
